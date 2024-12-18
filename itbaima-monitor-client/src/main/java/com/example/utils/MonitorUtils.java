@@ -1,8 +1,11 @@
 package com.example.utils;
 
 import com.example.entity.BaseDetail;
+import com.example.entity.ConnectionConfig;
 import com.example.entity.RuntimeDetail;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
@@ -13,15 +16,15 @@ import oshi.software.os.OperatingSystem;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.NetworkInterface;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Objects;
-import java.util.Properties;
+import java.util.*;
 
 @Slf4j
 @Component
 public class MonitorUtils {
+
+    @Lazy
+    @Resource
+    ConnectionConfig config;
 
     private final SystemInfo info = new SystemInfo();
     private final Properties properties = System.getProperties();
@@ -100,16 +103,25 @@ public class MonitorUtils {
         return (cSys + cUser) * 1.0 / totalCpu;
     }
 
+    public List<String> listNetworkInterfaceName() {
+        HardwareAbstractionLayer hardware = info.getHardware();
+        return hardware.getNetworkIFs()
+                .stream()
+                .map(NetworkIF::getName)
+                .toList();
+    }
+
     private NetworkIF findNetworkInterface(HardwareAbstractionLayer hardware) {
         try {
-            for (NetworkIF network : hardware.getNetworkIFs()) {
-                String[] ipv4Addr = network.getIPv4addr();
-                NetworkInterface ni = network.queryNetworkInterface();
-                if(!ni.isLoopback() && !ni.isPointToPoint() && ni.isUp() && !ni.isVirtual()
-                        && (ni.getName().startsWith("eth") || ni.getName().startsWith("en"))
-                        && ipv4Addr.length > 0) {
-                    return network;
-                }
+            String target = config.getNetworkInterface();
+            List<NetworkIF> ifs = hardware.getNetworkIFs()
+                    .stream()
+                    .filter(inter -> inter.getName().equals(target))
+                    .toList();
+            if (!ifs.isEmpty()) {
+                return ifs.get(0);
+            } else {
+                throw new IOException("网卡信息错误，找不到网卡: " + target);
             }
         } catch (IOException e) {
             log.error("读取网络接口信息时出错", e);

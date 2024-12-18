@@ -16,6 +16,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Scanner;
 
 @Slf4j
@@ -45,14 +46,24 @@ public class ServerConfiguration implements ApplicationRunner {
 
     private ConnectionConfig registerToServer() {
         Scanner scanner = new Scanner(System.in);
-        String token, address;
+        String token, address, ifName;
         do {
             log.info("请输入需要注册的服务端访问地址，地址类似于 'http://192.168.0.22:8080' 这种写法:");
             address = scanner.nextLine();
             log.info("请输入服务端生成的用于注册客户端的Token秘钥:");
             token = scanner.nextLine();
+            List<String> ifs = monitor.listNetworkInterfaceName();
+            if(ifs.size() > 1) {
+                log.info("检测到您的主机有多个网卡设备: {}", ifs);
+                do {
+                    log.info("请选择需要监控的设备名称:");
+                    ifName = scanner.nextLine();
+                } while (!ifs.contains(ifName));
+            } else {
+                ifName = ifs.get(0);
+            }
         } while (!net.registerToServer(address, token));
-        ConnectionConfig config = new ConnectionConfig(address, token);
+        ConnectionConfig config = new ConnectionConfig(address, token, ifName);
         this.saveConfigurationToFile(config);
         return config;
     }

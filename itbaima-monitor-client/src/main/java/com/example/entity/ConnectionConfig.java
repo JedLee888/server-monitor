@@ -8,4 +8,5 @@ import lombok.Data;
 public class ConnectionConfig {
     String address;
     String token;
+    String networkInterface;
 }
