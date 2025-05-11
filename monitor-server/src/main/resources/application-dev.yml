@@ -1,0 +1,41 @@
+# 开发环境配置
+springdoc:
+  paths-to-match: /api/**
+  swagger-ui:
+    operations-sorter: alpha
+spring:
+  influx:
+    url: http://localhost:8086
+    user: admin
+    password: 12345678
+    org: admin
+  mail:
+    host: smtp.163.com
+    username: jed_lee89@163.com
+    password: DPQk29tRyCrPrBb7
+  datasource:
+    url: jdbc:mysql://localhost:3306/monitor
+    username: root
+    password: mysql6496..
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  security:
+    jwt:
+      key: 'abcdefghijklmn'
+      expire: 72
+      limit:
+        base: 10
+        upgrade: 300
+        frequency: 30
+    filter:
+      order: -100
+  web:
+    verify:
+      mail-limit: 30
+    flow:
+      period: 5
+      limit: 200
+      block: 10
+    cors:
+      origin: '*'
+      credentials: false
+      methods: '*'
