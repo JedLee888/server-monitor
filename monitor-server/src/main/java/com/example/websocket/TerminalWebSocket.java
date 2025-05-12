@@ -101,7 +101,7 @@ public class TerminalWebSocket {
             String message = e.getMessage();
             if(message.equals("Auth fail")) {
                 session.close(new CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT,
-                        "登录SSH失败，用户名或密码错误"));
+                        "登录SSH失败，用户名或密码错误,请检查"));
                 log.error("连接SSH失败，用户名或密码错误，登录失败");
             } else if(message.contains("Connection refused")) {
                 session.close(new CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT,
