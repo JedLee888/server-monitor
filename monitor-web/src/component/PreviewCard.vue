@@ -1,10 +1,39 @@
 <script setup>
+import { computed } from 'vue' // 确保导入 computed
 import {copyIp, fitByUnit, osNameToIcon, percentageToStatus, rename} from '@/tools'
 
 const props = defineProps({
   data: Object,
   update: Function
 })
+
+// 新增计算属性
+const isOverloaded = computed(() => {
+  if (!props.data.online) return false;
+  // CPU 使用率 (props.data.cpuUsage 已经是 0-1 的小数, 直接乘以 100)
+  const cpuUsagePercentage = props.data.cpuUsage * 100;
+  // 内存使用率 (props.data.memoryUsage 是已用GB, props.data.memory 是总GB)
+  const memoryUsagePercentage = (props.data.memoryUsage / props.data.memory) * 100;
+  return cpuUsagePercentage > 80 || memoryUsagePercentage > 80;
+});
+
+const statusText = computed(() => {
+  if (!props.data.online) return '离线';
+  if (isOverloaded.value) return '负载告警';
+  return '运行中'; // 原模板中“运行中”没有附加信息
+});
+
+const statusIconClass = computed(() => {
+  if (!props.data.online) return 'fa-solid fa-circle-stop';
+  // “负载告警”时也用播放图标，但颜色会变
+  return 'fa-solid fa-circle-play';
+});
+
+const statusColor = computed(() => {
+  if (!props.data.online) return '#8a8a8a'; // 离线颜色
+  if (isOverloaded.value) return 'red';    // 过载颜色
+  return '#18cb18'; // 正常运行颜色
+});
 </script>
 
 <template>
@@ -23,14 +52,12 @@ const props = defineProps({
           {{`${data.osName} ${data.osVersion}`}}
         </div>
       </div>
-      <div class="status" v-if="data.online">
-        <i style="color: #18cb18" class="fa-solid fa-circle-play"></i>
-        <span style="margin-left: 5px">运行中</span>
+
+      <div class="status">
+        <i :class="statusIconClass" :style="{ color: statusColor }"></i>
+        <span :style="{ marginLeft: '5px', color: statusColor }">{{ statusText }}</span>
       </div>
-      <div class="status" v-else>
-        <i style="color: #8a8a8a" class="fa-solid fa-circle-stop"></i>
-        <span style="margin-left: 5px">离线</span>
-      </div>
+
     </div>
     <el-divider style="margin: 10px 0"/>
     <div class="network">
